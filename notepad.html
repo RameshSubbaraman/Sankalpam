@@ -1,0 +1,734 @@
+
+<!DOCTYPE html> 
+<html> 
+<head> 
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/> 
+<title>Sankalpam Calculator</title> 
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+
+<!-- Prerequisites: jQuery and jQuery UI Stylesheet -->
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/redmond/jquery-ui.css" />
+
+<!-- Plugin files below -->
+<link rel="stylesheet" type="text/css" href="./static/jquery.ptTimeSelect.css" />
+<script type="text/javascript" src="./static/jquery.ptTimeSelect.js"></script>
+
+<!-- link calendar resources -->
+<link rel="stylesheet" type="text/css" href="./static/tcal.css" />
+<script type="text/javascript" src="./static/tcal.js"></script> 
+
+<style type="text/css">
+  html { height: 100% }
+  body { height: 100%; margin: 0; padding: 0 }
+  h1 { text-align:left; font-size:20px; }
+  input { width:110px; }
+</style>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        $("input#sankalpamtime").ptTimeSelect({
+            containerWidth: '18em',            
+            hoursLabel:     'Hour',
+            minutesLabel:   'Minutes',
+            setButtonLabel: 'Select',
+            onFocusDisplay: true,
+            onBeforeShow:   function(input, widget) {
+				$("input#sankalpamtime").val("5:15 AM");
+                              }
+          });
+    });
+</script>
+
+<script type="text/javascript" src="./static/jsr_class.js"></script>
+<script type="text/javascript" src="./static/json2.js"></script>
+    <script type="text/javascript">
+
+    function getDailyCalDate(){
+      var today = new Date();
+      var dd = today.getDate();
+      var mm = today.getMonth()+1; //January is 0!
+      var yyyy = today.getFullYear();
+      // var months = new Array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
+
+      if(dd<10) {
+          dd='0'+dd
+      } 
+
+      if(mm<10) {
+          mm='0'+mm
+      } 
+
+      dateStr  = mm + '/' + dd + '/' + yyyy;
+      return dateStr ;
+    }
+
+    function getSankalpamTime(){
+      hours = new Date().getHours();
+      minutes = new Date().getMinutes();
+
+      ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      minutes = minutes < 10 ? '0'+minutes : minutes;
+      timeStr = hours + ':' + minutes + ' ' + ampm;
+      return timeStr ;
+    }
+
+    function buildQueryString(parameters){
+      var qs = "";
+      for(var key in parameters) {
+        var value = parameters[key];
+        qs += encodeURIComponent(key) + "=" + encodeURIComponent(value) + "&";
+      }
+      if (qs.length > 0){
+        qs = qs.substring(0, qs.length-1); //chop off last "&"
+      }
+      return qs;
+    }
+
+    //
+    // As mentioned at http://en.wikipedia.org/wiki/XMLHttpRequest
+    //
+    if( !window.XMLHttpRequest ) XMLHttpRequest = function()
+    {
+      try{ return new ActiveXObject("Msxml2.XMLHTTP.6.0") }catch(e){}
+      try{ return new ActiveXObject("Msxml2.XMLHTTP.3.0") }catch(e){}
+      try{ return new ActiveXObject("Msxml2.XMLHTTP") }catch(e){}
+      try{ return new ActiveXObject("Microsoft.XMLHTTP") }catch(e){}
+      throw new Error("Could not find an XMLHttpRequest alternative.")
+    };
+
+    //
+    // Makes an AJAX request to a local server function w/ optional arguments
+    //
+    // functionName: the name of the server's AJAX function to call
+    // opt_argv: an Array of arguments for the AJAX function
+    //
+    function Request(function_name, opt_argv) {
+
+      if (!opt_argv)
+        opt_argv = new Array();
+
+      // Find if the last arg is a callback function; save it
+      var callback = null;
+      var len = opt_argv.length;
+      if (len > 0 && typeof opt_argv[len-1] == 'function') {
+        callback = opt_argv[len-1];
+        opt_argv.length--;
+      }
+      var async = (callback != null);
+
+      // Encode the arguments in to a URI
+      var query = 'action=' + encodeURIComponent(function_name);
+      for (var i = 0; i < opt_argv.length; i++) {
+        // var key = 'arg' + i;
+        // var val = JSON.stringify(opt_argv[i]);
+        // query += '&' + encodeURIComponent(opt_argv[i]);
+        query += '&' + opt_argv[i];
+      }
+      query += '&time=' + encodeURIComponent(new Date().getTime()); // IE cache workaround
+
+      // Create an XMLHttpRequest 'GET' request w/ an optional callback handler
+      var req = new XMLHttpRequest();
+      req.open('GET', '/rpc?' + query, async);
+
+      if (async) {
+        req.onreadystatechange = function() {
+          if(req.readyState == 4 && req.status == 200) {
+            var response = null;
+            try {
+             response = JSON.parse(req.responseText);
+            } catch (e) {
+             response = req.responseText;
+            }
+            callback(response);
+          }
+        }
+      }
+
+      // Make the actual request
+      req.send(null);
+    }
+
+    // Adds a stub function that will pass the arguments to the AJAX call
+    function InstallFunction(obj, functionName) {
+      obj[functionName] = function() { Request(functionName, arguments); }
+    }
+
+    </script>
+    <script type="text/javascript">
+
+    // record browser timezone
+    var browser_timezone = "";
+    // Server object that will contain the callable methods
+    var server = {};
+
+    // Insert 'findSankalpam' as the name of a callable method
+    InstallFunction(server, 'findSankalpam');
+
+
+    // Removed to work with jQeury; it conflicts with jQuery's $
+    // Handy "macro"
+    // function $(id){
+      // return document.getElementById(id);
+    //}
+
+    // Client function that calls a server rpc and provides a callback
+    function doFindSankalpam() {
+      var parameters = new Array();
+      parameters["cityfld"] = $("#cityfld").val();
+      parameters["latfld"] = $("#latfld").val();
+      parameters["lngfld"] = $("#lngfld").val();
+      parameters["tzfld"] = $("#tzfld").val();
+      parameters["sankalpamdatestr"] = $("#sankalpamdate").val();
+      parameters["sankalpamtimestr"] = $("#sankalpamtime").val();
+      server.findSankalpam(buildQueryString(parameters), onFindSankalpamSuccess);
+    }
+
+    // Callback for after a successful doFindSankalpam
+    function onFindSankalpamSuccess(response) {
+      document.getElementById('resulthtml').innerHTML = response
+
+      document.getElementById('locationdiv').innerHTML = 'Displaying results for ' + $("#cityfld").val() + '@ lat: ' + $("#latfld").val() + ', lng: ' + $("#lngfld").val() + ' in ' + $("#tzfld").val() + ' timezone'
+    }
+
+    function doGeocodeAddress() {
+        var address = document.getElementById("address").value;
+    	// here if new city has been explicitly provided
+    	// only then do we show map
+
+    	if (!geocoder) {
+      	  geocoder = new google.maps.Geocoder();
+	  if  (bShowMap) {
+      	    document.getElementById('map_canvas').style.height = "40%";
+      	    document.getElementById('map_canvas').innerHTML = '';
+      	    var myOptions = {
+        	zoom: 8,
+        	mapTypeId: google.maps.MapTypeId.ROADMAP
+      	    };
+      	    map = new google.maps.Map(document.getElementById('map_canvas'),
+              myOptions);
+	  }
+    	}
+
+        geocoder.geocode( { 'address': address}, function(results, status) {
+        if (status == google.maps.GeocoderStatus.OK) {
+	  if (bShowMap) {
+            map.setCenter(results[0].geometry.location);
+            var marker = new google.maps.Marker({
+              map: map, 
+              position: results[0].geometry.location,
+	      title: results[0].geometry.location.toString()
+            });
+	  }
+
+          var lat_element = document.getElementById("latfld");
+          var lng_element = document.getElementById("lngfld");
+          var city_element = document.getElementById("cityfld");
+          lat_element.value = results[0].geometry.location.lat();
+          lng_element.value = results[0].geometry.location.lng();
+          city_element.value = address;
+	  doFindTimeZone();
+        } else {
+          alert("Unable to geolocate you for the following reason: " + status);
+        }
+      });
+    }
+
+    // function that converts lat, lng to timezone and calls a callback
+    function doFindLatLng() {
+     
+      var city_element = document.getElementById("cityfld");
+      var lat_element = document.getElementById("latfld");
+      var lng_element = document.getElementById("lngfld");
+      var tz_element = document.getElementById("tzfld");
+      var parameters = new Array();
+      //parameters["key"] = 'AIzaSyBbuINT8so27VvuPETtttaIgEeWTXUK0Iw';
+      parameters["key"] = 'AIzaSyA7Hn70uFxZh7gDmTpTbZq_cXhLqyh0fng';
+      var query = buildQueryString(parameters);
+
+      var url = 'https://www.googleapis.com/geolocation/v1/geolocate?' + query;
+      // alert('finding latlng for:' + url);
+
+      $.post(url).done(function(response, status, xhr) {
+        //alert("status: "+ status+"lat: " + response.location.lat +" lng: " +response.location.lng);
+
+	if (status.indexOf("success") != 0) {
+	  handleNoGeolocation(true);
+	  return;
+	}
+
+        var navpos = { lat:response.location.lat,
+                                         lng:response.location.lng};
+	if (bShowMap) {
+          var pos = new google.maps.LatLng(navpos.lat,
+                                         navpos.lng);
+          map.setCenter(pos);
+          var marker = new google.maps.Marker({
+            map: map, 
+            position: pos,
+	    title: pos.toString()+'!'
+          });
+	  navpos.lat = pos.lat();
+	  navpos.lng = pos.lng();
+	}
+
+	// don't call server if lat, lng is unchanged
+	var olat = parseFloat(lat_element.value).toFixed(0)
+	var olng = parseFloat(lng_element.value).toFixed(0)
+	var nlat = (navpos.lat).toFixed(0)
+	var nlng = (navpos.lng).toFixed(0)
+	// alert('old lat:' + olat + 'new lat:' + nlat +'old lng:'+olng+'new lng:'+nlng + 'tz: ' + tz_element.value);
+        lat_element.value = navpos.lat;
+        lng_element.value = navpos.lng;
+        city_element.value = 'your_location';
+        document.getElementById('locationdiv').innerHTML = '<p>Located you at ' + 'lat: ' + navpos.lat + ', lng: ' + navpos.lng;
+
+	if (( olat != nlat) || (olng != nlng) ) {
+	    // this triggers the server call to findDailycal
+	    // alert('calling server: old lat:' + olat + 'new lat:' + nlat +'old lng:'+olng+'new lng:'+nlng + 'tz: ' + tz_element.value);
+	    // found the location thru geocode API so browser based tz == user's desired location
+	    doBrowserFindTimeZone();
+	}
+
+      });
+    }
+
+     
+    // function that converts lat, lng to timezone and calls a callback
+    function doBrowserFindTimeZone() {
+
+      var city_element = document.getElementById("cityfld");
+      var tz_element = document.getElementById("tzfld");
+
+      if (browser_timezone && browser_timezone != "") {
+
+        // some users in India are getting US timezones
+        // not sure if they are traveling from US and browser tz is stale
+        // but navigator.gelocation is up to date
+
+        // check for browser tz and if not undefined then use it
+        // below only works when auto-locating a user vs when they explicitly 
+        // specify a location in a diff geo-coordinate
+        if (!isBrowserTimeZoneSuspect()) {
+          tz_element.value = browser_timezone;
+          doFindSankalpam();
+          return;
+        }
+	      //fall thru to calling API to get tz which then calls the backend
+      } else {
+        alert('Your browser does not support timezone detection. Please upgrade your browser so we can save cost in providing this service.');
+	      //fall thru to calling API to get tz which then calls the backend
+      }
+
+      // find tz from API, which will call the server after that
+      doFindTimeZone();
+    }
+
+    // function that converts lat, lng to timezone and calls a callback
+    function doFindTimeZone() {
+     
+      var city_element = document.getElementById("cityfld");
+      var parameters = new Array();
+      parameters["location"] = $("#latfld").val() +','+ $("#lngfld").val();
+      //parameters["key"] = 'AIzaSyBbuINT8so27VvuPETtttaIgEeWTXUK0Iw';
+      parameters["key"] = 'AIzaSyA7Hn70uFxZh7gDmTpTbZq_cXhLqyh0fng';
+      parameters["timestamp"] = (Math.round((new Date().getTime()) / 1000)).toString();
+      // https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyA7Hn70uFxZh7gDmTpTbZq_cXhLqyh0fng
+
+      var query = buildQueryString(parameters);
+
+      var url = 'https://maps.googleapis.com/maps/api/timezone/json?' + query;
+      // alert('finding timezone for:' + url);
+
+      $.ajax({
+        url: url,
+      }).done(function(response) {
+        //alert("timezone is " + response.timeZoneName);
+        var timezone = response.timeZoneId;
+        var tz_element = document.getElementById("tzfld");
+
+        if (!timezone || timezone === "") {
+          
+	  if ( !tz_element.value || tz_element.value === "") {
+            if(!navigator.cookieEnabled) {
+              alert("Could not detect your timezone. Please enable cookies so we can save your timezone for future use and incur lower cost to provide this service.");
+	    } else {
+              alert("Could not detect your timezone. Please try again after some time.");
+	    }
+	    // cant set tz to us pacific mismatched with lat, lng
+	    // timezone = 'US/Pacific';
+	    // so bail instead
+	    return;
+	  } else {
+	    // we could take old timezone from cookie vs set to US Pacific
+	    // we still risk a mismatch with the user entered codeaddress if diff tz than cookie
+	    // ISSUE - we would have likley already shown the results for the cookie loc+tz
+	    // so why change just the loc but not the tz?
+            alert("Could not detect the timezone for your new location. Please refresh the browser or try again after some time.");
+	    return;
+	  }
+        }
+        tz_element.value = timezone;
+
+        if (browser_timezone && browser_timezone != "") {
+          if ((city_element.value == 'your_location') && (browser_timezone != timezone)) {
+            alert("Your browser timezone: " + browser_timezone + " does not match your current location's timezone: " + timezone + ". We much appreciate if you could please contact us at webteam@ahobilamutt.org to help us diagnose this issue. It will help us save cost and improve our site.");
+          }
+        }
+        doFindSankalpam();
+      });
+    }
+
+      
+    </script>
+<!-- <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyBbuINT8so27VvuPETtttaIgEeWTXUK0Iw"></script> -->
+<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyA7Hn70uFxZh7gDmTpTbZq_cXhLqyh0fng"></script> 
+<script type="text/javascript"> 
+  var bShowMap = false;
+  var geocoder;
+  var map;
+  function initialize() {
+    
+    var address_element = document.getElementById("address");
+    var city_element = document.getElementById("cityfld");
+    var lat_element = document.getElementById("latfld");
+    var lng_element = document.getElementById("lngfld");
+    var tz_element = document.getElementById("tzfld");
+    var date_element = document.getElementById("sankalpamdate");
+    date_element.value = getDailyCalDate();
+    var time_element = document.getElementById("sankalpamtime");
+    time_element.value = getSankalpamTime();
+
+    var prevlocation = city_element.value;
+
+    browser_tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (browser_tz && browser_tz != "") {
+      browser_timezone = browser_tz;
+    }
+
+    if (city_element.value.length) {
+
+      if (prevlocation == 'your_location')
+        pl =  ', ';
+      else
+        pl = ': ' + prevlocation + ', ';
+
+      // have prev cookie data
+      document.getElementById('locationdiv').innerHTML = "<p>Welcome back! Here are results for your previous location" + pl + "@lat:"+ lat_element.value + ",lng:" + lng_element.value + " in " + tz_element.value + ".<br/> For a <b>different location</b>, please enter your city and click on the Find Sankalpam button.<br/>";
+      // alert('found cookies at init: ' + city_element.value);
+    } else {
+      document.getElementById('locationdiv').innerHTML = "<p>Locating you... Your browser may prompt you to allow this site to detect you location automatically. Please choose allow and if that doesnt work for you, manually enter your city below.<br/>";
+      document.getElementById('resulthtml').innerHTML = '';
+      //alert('no cookies!: ');
+
+      // dont show map by default
+      if (bShowMap) {
+        document.getElementById('map_canvas').innerHTML = '';
+        document.getElementById('map_canvas').style.height = "40%";
+      }
+    }
+
+
+    if (!city_element.value.length) {
+      geocoder = new google.maps.Geocoder();
+
+      if (bShowMap) {
+        // dont turn on maps even if no prev cookie
+        var myOptions = {
+          zoom: 8,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        map = new google.maps.Map(document.getElementById('map_canvas'),
+            myOptions);
+      }
+
+    }
+ 
+   // Try HTML5 geolocation if this is first time user is visiting page
+   if(navigator.geolocation) {
+
+      navigator.geolocation.getCurrentPosition(function(position) {
+
+        var navpos = { lat:position.coords.latitude,
+                                         lng:position.coords.longitude};
+        // alert('now in geolocation lat: ' + navpos.lat + 'lng: ' + navpos.lng);
+
+        if (bShowMap) {
+          // turn on maps only if no prev cookie
+          var pos = new google.maps.LatLng(navpos.lat, navpos.lng);
+          map.setCenter(pos);
+          var marker = new google.maps.Marker({
+              map: map, 
+              position: pos,
+	      title: pos.toString()+'!'
+          })
+	  navpos.lat = pos.lat();
+	  navpos.lng = pos.lng();
+	}
+
+	// don't call server if lat, lng is unchanged
+	var olat = parseFloat(lat_element.value).toFixed(0)
+	var olng = parseFloat(lng_element.value).toFixed(0)
+	var nlat = (navpos.lat).toFixed(0)
+	var nlng = (navpos.lng).toFixed(0)
+	// alert('old lat:' + olat + 'new lat:' + nlat +'old lng:'+olng+'new lng:'+nlng + 'tz: ' + tz_element.value);
+        lat_element.value = navpos.lat;
+        lng_element.value = navpos.lng;
+        city_element.value = 'your_location';
+        address_element.value = '';
+        document.getElementById('locationdiv').innerHTML = '<p>Located you at ' + 'lat: ' + navpos.lat + ', lng: ' + navpos.lng;
+
+	if (( olat != nlat) || (olng != nlng) ) {
+	    // this triggers the server call to findDailycal
+	    // alert('calling server: old lat:' + olat + 'new lat:' + nlat +'old lng:'+olng+'new lng:'+nlng + 'tz: ' + tz_element.value);
+
+          if (!geocoder) {
+            geocoder = new google.maps.Geocoder();
+
+	    if (bShowMap) {
+              document.getElementById('map_canvas').style.height = "40%";
+              document.getElementById('map_canvas').innerHTML = '';
+              var myOptions = {
+                zoom: 8,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+              };
+              map = new google.maps.Map(document.getElementById('map_canvas'),
+                  myOptions);
+            }
+          }
+
+	  if (bShowMap) {
+            var pos = new google.maps.LatLng(navpos.lat, navpos.lng);
+            map.setCenter(pos);
+            var marker = new google.maps.Marker({
+                map: map, 
+                position: pos,
+	        title: pos.toString()+'!'
+              })
+	  }
+
+	  // browser based tz check possible only when we have
+	  // auto-loacted the user geolocation with browser
+	  // vs in manually entered address, the user may be
+	  // trying to find info for a diff location and tz
+	  doBrowserFindTimeZone();
+	} else {
+          city_element.value = prevlocation;
+	  if (prevlocation == 'your_location')
+	    prevlocation =  ',';
+	  else
+	    prevlocation = ': ' + prevlocation + ',';
+          document.getElementById('locationdiv').innerHTML = '<p>Located you at ' + 'lat: ' + navpos.lat + ', lng: ' + navpos.lng + ', timezone: ' + tz_element.value + '<br/>Very close to previous location' + prevlocation + ' whose results are below: ';
+
+	}
+
+      }, function(failure) {
+	if(failure.message.indexOf("Only secure origins are allowed") == 0) {
+	  // alert('html geolocation failed as not secure origin:' + failure.message);
+	  // if no html geolocation, but have a cookie, then dont 
+	  // take explicit call to geolocate w/ api for now
+	  // downside is that if these users access from a new location we will
+	  // still show results for old location
+	  // work around for them will be to explicitly enter new location
+          if (!city_element.value.length)
+            doFindLatLng();
+        } else {
+	  // alert('Cannot automatically geolocate you. Please enable location detection so we can provide this service at a lower cost' + failure.message);
+	  handleNoGeolocation(true);
+	}
+      });
+    } else {
+      // Browser doesn't support Geolocation
+      alert('Browser doesnt support geolocation');
+      handleNoGeolocation(false);
+    }
+  }
+
+  function handleNoGeolocation(errorFlag) {
+    var content = '';
+    if (errorFlag) {
+      content = 'Error: The Geolocation service failed. Pls check your device settings';
+      // alert(content);
+    } else {
+      content = 'Error: Your browser doesn\'t support geolocation. Please check your device settings';
+      // alert(content);
+    }
+
+    var city_element = document.getElementById("cityfld");
+    var lat_element = document.getElementById("latfld");
+    var lng_element = document.getElementById("lngfld");
+    var tz_element = document.getElementById("tzfld");
+
+    // we can't geolocate, but there is a cookie; so, navigate to it
+    if (city_element.value.length) {
+      titlecontent = 'Displaying results for your last known location: ' + city_element.value + '@lat:' + lat_element.value + ',lng:' + lng_element.value + ' in ' + tz_element.value;
+      content = 'Unable to locate your current position. <br/>Displaying results for your last known location: ' + city_element.value + '@lat:' + lat_element.value + ',lng:' + lng_element.value + ' in ' + tz_element.value;
+      document.getElementById('locationdiv').innerHTML = content;
+
+      if (bShowMap) {
+        var pos = new google.maps.LatLng(lat_element.value, lng_element.value);
+        map.setCenter(pos);
+        var marker = new google.maps.Marker({
+            map: map, 
+            position: pos,
+	    title: titlecontent
+          })
+      }
+
+      // moot as if there was a prev location, the result is already passed in on main page load from the server
+      // doFindSankalpam();
+    } else {
+      document.getElementById('locationdiv').innerHTML = 'Unable to determine your location automatically. Please enter your city and click on Find Sankalpam.';
+      document.getElementById('resulthtml').innerHTML = '';
+    }
+
+  }
+
+  function isBrowserTimeZoneSuspect() {
+      var city_element = document.getElementById("cityfld");
+      var lng_element = document.getElementById("lngfld");
+      if (browser_timezone && browser_timezone != "") {
+        var time_offset = new Date().getTimezoneOffset();
+	      var lng = parseFloat(lng_element.value).toFixed(0)
+        
+        if (city_element.value == 'your_location') {
+          if ( ((lng < 0) && (time_offset < 0))  || ((lng > 0) && (time_offset > 0))) {
+            alert("Your browser timezone: " + browser_timezone + " and time offset: " + time_offset + " does not match your current location's longitude: " + lng +  ". We much appreciate if you could please contact us at webteam@ahobilamutt.org to help us diagnose this issue. It will help us save cost and improve our site.");
+            return true;
+          }
+        }
+      }
+
+      return false;
+  }
+
+  function checkDateTime(skpmdate, skpmtime) {
+    // regular expression to match required date format
+    re = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+
+    if(skpmdate.value != '' && !skpmdate.value.match(re)) {
+      alert("Invalid date format: " + skpmdate.value);
+      skpmdate.focus();
+      return false;
+    }
+
+    // regular expression to match required time format
+    re = /^\d{1,2}:\d{2}((\s)+[AaPp][mM])?$/;
+
+    if(skpmtime.value != '' && !skpmtime.value.match(re)) {
+      alert("Invalid time format: " + skpmtime.value);
+      // skpmtime.setAttribute("style", "color: red");
+      skpmtime.focus();
+      return false;
+    }
+
+    return true;
+  }
+
+  function showMap() {
+    var address = document.getElementById("address").value;
+    var city_element = document.getElementById("cityfld");
+    var lat_element = document.getElementById("latfld");
+    var lng_element = document.getElementById("lngfld");
+
+    bShowMap = true;
+
+    if (lat_element.value) {
+      document.getElementById('map_canvas').innerHTML = '';
+      document.getElementById('map_canvas').style.height = "40%";
+      document.getElementById('showmap').style.visibility = 'hidden';
+
+      var myOptions = {
+        zoom: 8,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+      map = new google.maps.Map(document.getElementById('map_canvas'),
+            myOptions);
+
+      var navpos = { lat:lat_element.value,
+                                         lng:lng_element.value};
+
+      var pos = new google.maps.LatLng(navpos.lat,
+                                         navpos.lng);
+      map.setCenter(pos);
+      var marker = new google.maps.Marker({
+        map: map, 
+        position: pos,
+	title: pos.toString()+'!'
+      });
+    } else {
+      alert("Please share your location or enter city in the form above and click on Find Sankalpam button.");
+    }
+
+  }
+
+  function codeAddressForSankalpam() {
+    var address = document.getElementById("address").value;
+    var city_element = document.getElementById("cityfld");
+
+    // validate date and time, if provided/overidden
+    if (!checkDateTime(document.getElementById("sankalpamdate"),document.getElementById("sankalpamtime"))) {
+
+        document.getElementById('locationdiv').innerHTML = 'Please provide a date in the format mm/dd/yyyy eg. 6/13/2025 and time in 24-format hh:mm eg. 18:05 or in 12-hr format eg. 6:05 pm';
+        document.getElementById('resulthtml').innerHTML = '';
+
+        return;
+    }
+
+    //check if only the date has been overridden
+    if (!address.length) {
+        if (!city_element.value) {
+          document.getElementById('locationdiv').innerHTML = 'Unable to determine your location automatically. Please <b>enter your city</b> and click on Find Sankalpam.';
+          document.getElementById('resulthtml').innerHTML = '';
+	} else {
+	  doFindSankalpam();
+	}
+	return;
+    }
+
+    doGeocodeAddress(); // this calls find timezone
+
+  }
+</script> 
+</head> 
+<body onload="initialize()"> 
+
+  <div id="locationdiv">
+    Locating you... Your browser may prompt you to allow this site to detect you location automatically. Please choose allow and if that doesnt work for you, manually enter your city below.
+  </div> 
+
+  <div id="resulthtml">
+    <p>Sankalpam for  on <br/>At  and valid through :<br/>
+    <b> </b> nAma samvathsarE, 
+    <b> </b>, <br/>
+    <b> </b> rithou,
+    <b> </b> mAsE, <br/>
+    <b> </b> pakshE, 
+    <b> </b> shubha thithou,<br/>
+    <b> </b> vAsara, 
+    <b> </b> nakshatra yukthAyAm...<br/>
+    Sunrise: <i> </i><br/>
+    Sunset: <i> </i><br/>
+  </div>
+
+
+  <div>
+    <input id="tzfld" name="tzfldname" type="hidden" value="" />
+    <input id="cityfld" name="city" type="hidden" value="" />
+    <input id="latfld" name="obslat" type="hidden" value="" />
+    <input id="lngfld" name="obslng" type="hidden" value=""/>
+    Date: <input id="sankalpamdate" type="text" class="tcal" value="" onkeydown="if (event.keyCode == 13) document.getElementById('findSankalpamID').click()"> (mm/dd/yyyy format, eg. 5/17/2025)<br/>
+    Time:<input id="sankalpamtime" type="textbox" value="" onkeydown="if (event.keyCode == 13) document.getElementById('findSankalpamID').click()"> (eg. 9:43 AM)<br/>
+    City: <input id="address" type="textbox" value="" onkeydown="if (event.keyCode == 13) document.getElementById('findSankalpamID').click()"> (eg. Srirangam or Salem, Oregon)<br/>
+    <input type="button" id="findSankalpamID" value="Find Sankalpam" onclick="codeAddressForSankalpam()">
+
+  </div> 
+  <div>
+  <br/>
+  </div>
+
+  
+</body> 
+</html>

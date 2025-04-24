@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Sankalpam - Alpharetta</title>
+    <style>
+        body {
+            font-family: serif;
+            background-color: #f7f1e1;
+            color: #3b2f2f;
+            padding: 20px;
+        }
+        .sankalpam-box {
+            border: 2px solid #d4b483;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: #fffaf0;
+        }
+        h1 {
+            text-align: center;
+            color: #8b0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Daily Sankalpam</h1>
+    <div class="sankalpam-box" id="sankalpamContent">
+        <!-- Sankalpam text will appear here -->
+    </div>
+
+    <script>
+        function getSankalpam() {
+            const today = new Date();
+
+            // Sample placeholders (you may replace these with real data sources)
+            const samvatsara = "Krodhi"; // Replace with actual logic
+            const ayana = today.getMonth() + 1 >= 6 ? "Dakshina" : "Uttara";
+            const ritu = "Vasanta"; // Could be dynamically calculated
+            const masa = "Chaitra"; // Approximate month
+            const paksha = today.getDate() < 15 ? "Shukla" : "Krishna";
+            const tithi = "Trayodashi";
+            const vasara = today.toLocaleString('en-US', { weekday: 'long' });
+            const nakshatra = "Rohini";
+            const yoga = "Siddhi";
+            const karana = "Bava";
+
+            const sankalpam = `Sri: Govinda! Govinda! Govinda!<br>
+            sri: maha: vishno: ra:gnaya:,<br>
+            pravartama:nasya, adya brahmanah, dwiti:ya para:rdhe:,<br>
+            sri: swe:ta vara:ha kalpe:, vaivaswata manvantare:,<br>
+            kaliyuge:, pradhamapa:de:, krouncha dwi:pe:, ramanaka varshe:,<br>
+            aindra khande:, meroho paschima digbha:ge: uttara ameruka:ya:m,<br>
+            Atlantic pacific sa:garayo:rmadhya de:she:,<br>
+            rocky-mickelny parvatayormadhye:,<br>
+            Misissipi - Missouri itya:di sho:dasa ji:va nadi: pari:va:ha pra:nthe:,<br>
+            Georgia ra:sthre:, Alpharetta nagare:,<br>
+            asmin varthama:na vya:vaha:rika cha:ndra ma:ne:na,<br>
+            prabhava:di shasthi samvatsara:na:m madhye:,<br>
+            ${samvatsara} na:ma samvatsare:,<br>
+            ${ayana} ayane:, ${ritu} ruthou, ${masa} ma:se:,<br>
+            ${paksha} pakshe:, ${tithi} tidhou, ${vasara} va:sare:,<br>
+            ${nakshatra} nakshatre:, ${yoga} yo:ge:, ${karana} karane:,<br>
+            ye:vam guna vise:shana visistha:ya:m asya:m subha tidhou,<br>
+            mama kutumbasya/asma:kam sahakutumba:na:m,<br>
+            kshe:ma sthairya dhairya vi:rya abhaya a:yuhu a:ro:gya aishwarya<br>
+            dhana kanaka vasthu va:hana putra poutra:bhivrudhyardham,<br>
+            dharma:rdha ka:ma mo:ksha:khya chaturvidha phala purusha:rdha sidhyardham,<br>
+            a:dhya:tmika a:dhidaivika a:dhibhoutika ta:patraya niva:rana:rdham,<br>
+            mano:bhilashita ka:mana: sidhyardham,<br>
+            samasta mangala:vyaptyardham sri: bhagavat bha:gavatha kainkarya ru:pam<br>
+            -------------------------puja:m a:cha:rya sri:hasthe:na adya ka:rayishye:`;
+
+            document.getElementById("sankalpamContent").innerHTML = sankalpam;
+        }
+
+        getSankalpam();
+    </script>
+</body>
+</html>

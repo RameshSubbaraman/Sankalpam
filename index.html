@@ -1,112 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hindu Sankalpam for Alpharetta, US</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #4CAF50;
-        }
-        .content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .section {
-            margin-bottom: 20px;
-        }
-        .highlight {
-            font-weight: bold;
-            color: #555;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sankalpam Generator</title>
+  <style>
+    body {
+      font-family: Calibri, sans-serif;
+      line-height: 1.5;
+      background-color: #f7f7f7;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #4CAF50;
+    }
+    label, input {
+      display: block;
+      margin-bottom: 10px;
+    }
+    input {
+      padding: 8px;
+      width: 100%;
+    }
+    .output {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #eef;
+      border-left: 5px solid #4CAF50;
+    }
+  </style>
 </head>
 <body>
-    <h1>Sankalpam for Alpharetta, US</h1>
-    <div class="content">
-        <h2>Sankalpam Details</h2>
-        <div class="section">
-            <p><span class="highlight">Sri:</span> Govinda! Govinda! Govinda!</p>
-            <p><span class="highlight">Sankalpam for:</span> Sri Maha Vishno Raghnaya, Pravartamana Nasya, Adya Brahmanah, Dwitiya Parardhe, etc.</p>
-        </div>
+  <div class="container">
+    <h1>Dynamic Sankalpam Generator</h1>
+    <label for="date">Select Date:</label>
+    <input type="date" id="date" />
 
-        <div class="section">
-            <p><span class="highlight">Time and Date Information:</span></p>
-            <p id="current-date"></p>
-            <p><span class="highlight">Location:</span> Alpharetta, US</p>
-            <p><span class="highlight">Prabhavaadi:</span> Shasthi Samvatsara</p>
-            <p><span class="highlight">Current Season:</span> <span id="current-season"></span></p>
-            <p><span class="highlight">Current Month:</span> <span id="current-month"></span></p>
-            <p><span class="highlight">Pakshe:</span> Sukla / Krushna</p>
-            <p><span class="highlight">Tidhou:</span> <span id="current-tithi"></span></p>
-        </div>
+    <label for="city">Enter City:</label>
+    <input type="text" id="city" placeholder="Alpharetta" />
 
-        <div class="section">
-            <p><span class="highlight">Specific Details for Alpharetta:</span></p>
-            <p>The Sankalpam for the city of Alpharetta, GA includes: <strong>Rocky-Mickelny Parvatayormadhye</strong>, Mississippi-Missouri river belt, and other sacred locations. Special prayers are offered for family well-being and prosperity.</p>
-        </div>
+    <label for="name">Your Name:</label>
+    <input type="text" id="yourname" placeholder="Your Name" />
 
-        <div class="section">
-            <p><span class="highlight">Blessings:</span> Kshema, Sthairya, Dhairya, Virya, Abhaya, Ayuhu, Arogya, Aishwarya, Dhana, Kanaka, Vastu, Vahana, Putra, Poutra, etc.</p>
-        </div>
+    <label for="wifename">Wife's Name:</label>
+    <input type="text" id="wifename" placeholder="Wife's Name" />
 
-        <div class="section">
-            <p><span class="highlight">Purushartha:</span> Dharma, Artha, Kama, Moksha</p>
-            <p><span class="highlight">Other Blessings:</span> Aadhyatmika, Aadhidaivika, Aadhibhautika Tapatraya Nivarana, Mano Bhilashita Kamana, Samasta Mangalavyapara, etc.</p>
-        </div>
+    <label for="gotra">Gotra:</label>
+    <input type="text" id="gotra" placeholder="Gotra" />
 
-        <p id="final-sankalpam"></p>
-    </div>
+    <button onclick="generateSankalpam()">Generate Sankalpam</button>
 
-    <script>
-        // JavaScript code to display dynamic details based on the date and location
+    <div class="output" id="sankalpamOutput"></div>
+  </div>
 
-        function getCurrentDate() {
-            const date = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            return date.toLocaleDateString('en-US', options);
-        }
+  <script>
+    function generateSankalpam() {
+      const date = new Date(document.getElementById('date').value);
+      const city = document.getElementById('city').value || 'Alpharetta';
+      const yourName = document.getElementById('yourname').value || '________________';
+      const wifeName = document.getElementById('wifename').value || '________________';
+      const gotra = document.getElementById('gotra').value || '________________';
 
-        function getSeason() {
-            const date = new Date();
-            const month = date.getMonth() + 1; // Months are zero-indexed (0-11)
-            if (month >= 3 && month <= 5) {
-                return "Vasant Ritu (Spring)";
-            } else if (month >= 6 && month <= 8) {
-                return "Grishma Ritu (Summer)";
-            } else if (month >= 9 && month <= 11) {
-                return "Varsha Ritu (Rainy)";
-            } else {
-                return "Shishira Ritu (Winter)";
-            }
-        }
+      const month = date.toLocaleString('default', { month: 'long' });
+      const weekday = date.toLocaleString('default', { weekday: 'long' });
+      const day = date.getDate();
+      const year = date.getFullYear();
+      const season = getSeason(date.getMonth() + 1);
 
-        function getTithi() {
-            const date = new Date();
-            // For simplicity, we just use a random number to represent Tithi (you can replace with actual lunar data)
-            const tithis = ["Pratipada", "Dvitia", "Tritiya", "Chaturthi", "Panchami", "Shashti", "Saptami", "Ashtami", "Navami", "Dashami", "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi", "Purnima", "Amavasya"];
-            return tithis[Math.floor(Math.random() * tithis.length)];
-        }
+      const sankalpam = `
+        Mamo partha samastha durithakshaya dwara Sri Parameshwara preethyartham .........
+        Sri maha vishnu raagnaya, pravarta manasya, aadya brahmanaha, dwiteeya parardhe,
+        sweta varaha kalpe, vivaswata manwantare, kaliyuge, pradhama paade,
+        krouncha dwi:pe:, ramanaka varshe:, aindra khande:, meroho paschima digbhage:
+        uttara America deshe, ${city} nagare:,
+        asmin varthama:na vya:vaha:rika cha:ndra ma:ne:na,
+        prabhava:di shasthi samvatsara:na:m madhye:,
+        ----------------------------- na:ma samvatsare:,
+        -------(uttara-from Jan 13 to June13/dakshina-from June 13 to Jan 13) ayane:,
+        ${season} ruthou, ${month} ma:se:, sukla/krushna pakshe:, tidhou, ${weekday} va:sare:,
+        ------------- nakshatre:, ----------------yo:ge:, --------------- karane:,
+        evam guna visheshana visishtayaam, sriman ${yourName} naama dheyaaham,
+        sreemataha ${wifeName} naamnyam, ${gotra} gotrodbhavasya,
+        mama upatta duritakshaya dwara, sri parameswara mugdhisya,
+        sri parameswara preetyardham.
+      `;
 
-        function getFinalSankalpam() {
-            return "Today, I will perform the Sankalpam for the well-being of my family and all beings. I seek blessings for prosperity, health, and spiritual growth.";
-        }
+      document.getElementById('sankalpamOutput').innerText = sankalpam;
+    }
 
-        // Set dynamic values
-        document.getElementById("current-date").textContent = "Today's Date: " + getCurrentDate();
-        document.getElementById("current-season").textContent = getSeason();
-        document.getElementById("current-month").textContent = new Date().toLocaleString('default', { month: 'long' });
-        document.getElementById("current-tithi").textContent = getTithi();
-        document.getElementById("final-sankalpam").textContent = getFinalSankalpam();
-    </script>
+    function getSeason(month) {
+      if (month >= 1 && month <= 2 || month === 12) return "Shishira";
+      if (month >= 3 && month <= 4) return "Vasanta";
+      if (month >= 5 && month <= 6) return "Grishma";
+      if (month >= 7 && month <= 8) return "Varsha";
+      if (month >= 9 && month <= 10) return "Sharad";
+      if (month === 11) return "Hemanta";
+    }
+  </script>
 </body>
 </html>
